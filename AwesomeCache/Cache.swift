@@ -132,7 +132,7 @@ open class Cache<T: NSCoding> {
         var objects = [T]()
 
         queue.sync {
-            let keys = self.allKeys()
+            let keys = self._allKeys()
             let all = keys.map(self.read).flatMap { $0 }
             let filtered = includeExpired ? all : all.filter { !$0.isExpired() }
             objects = filtered.map { $0.value as? T }.flatMap { $0 }
@@ -181,7 +181,7 @@ open class Cache<T: NSCoding> {
         cache.removeAllObjects()
         
         queue.sync(flags: .barrier, execute: {
-            let keys = self.allKeys()
+            let keys = self._allKeys()
             keys.forEach(self.removeFromDisk)
         }) 
     }
@@ -189,7 +189,7 @@ open class Cache<T: NSCoding> {
     /// Removes all expired objects from the cache.
     open func removeExpiredObjects() {
         queue.sync(flags: .barrier, execute: {
-            let keys = self.allKeys()
+            let keys = self._allKeys()
 
             for key in keys {
                 let possibleObject = self.read(key)
@@ -199,6 +199,12 @@ open class Cache<T: NSCoding> {
                 }
             }
         }) 
+    }
+    
+    open func allKeys() -> [String] {
+        return queue.sync(flags: .barrier) {
+            return self._allKeys()
+        }
     }
 
     // MARK: Subscripting
@@ -251,7 +257,7 @@ open class Cache<T: NSCoding> {
 
     // MARK: Private Helper
 
-    fileprivate func allKeys() -> [String] {
+    fileprivate func _allKeys() -> [String] {
         let urls = try? self.fileManager.contentsOfDirectory(at: self.cacheDirectory, includingPropertiesForKeys: nil, options: [])
         return urls?.flatMap { $0.deletingPathExtension().lastPathComponent } ?? []
     }
