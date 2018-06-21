@@ -269,7 +269,7 @@ open class Cache<T: NSCoding> {
             .appendingPathExtension("cache")
     }
 
-    fileprivate func sanitizedKey(_ key: String) -> String {
+    open func sanitizedKey(_ key: String) -> String {
         return key.replacingOccurrences(of: "[^a-zA-Z0-9_]+", with: "-", options: .regularExpression, range: nil)
     }
 
